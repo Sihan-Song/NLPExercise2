@@ -1,8 +1,9 @@
+import os
+os.environ['CUDA_VISIBLE_DEVICES']="0,2,3,4"
 import data
 from models.LSTMWithAttention import LSTMWithAttention
 import torch
 import torch.nn.functional as F
-import os
 class Config(object):
     vocab_size=0#后续更新
     embedding_dim=300
@@ -49,7 +50,7 @@ def train(train_iter,model,conf):
                 target=target.cuda()
 
             optimizer.zero_grad()
-            input_data=(premise,hypothesis)
+            input_data=[premise,hypothesis]
             logit=model(input_data)
             loss = F.cross_entropy(logit, target)
             loss.backward()
@@ -59,8 +60,8 @@ def train(train_iter,model,conf):
             correct = (pred.data == target.data).sum()  # 得到的是一个只有一个元素的tensor
             total_loss += loss.item()
             total_correct += correct.item()
-            total_count += data.shape[0]
-            assert data.shape[0] == batch.batch_size
+            total_count += batch.batch_size
+            assert premise.shape[0] == batch.batch_size
             batch_cnt += 1
 
         total_loss /= total_count
@@ -81,5 +82,7 @@ if __name__=="__main__":
     conf.vocab_size=len(text_field.vocab)
     conf.num_classes=len(label_field.vocab)-1
     model=LSTMWithAttention(conf)
+    #for i in model.parameters():
+    #    print(i)
     train(train_iter,model,conf)
 
